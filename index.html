@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FairPay Register</title>
+  <!-- Link to manifest for PWA support -->
+  <link rel="manifest" href="manifest.json">
+  <!-- Set theme color for mobile browsers -->
+  <meta name="theme-color" content="#0d47a1">
+  <style>
+    /* Body with a light blue background */
+    body { 
+      font-family: Arial, sans-serif; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh; 
+      background-color: #e0f7fa;
+      margin: 0;
+    }
+    .container {
+      width: 90%;
+      max-width: 400px;
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    img {
+      width: 150px; 
+      margin-bottom: 10px;
+    }
+    h2 {
+      color: #0d47a1; /* Dark blue header */
+      margin-bottom: 20px;
+    }
+    /* Ensure inputs, selects, and buttons are the same size with round (oval) corners */
+    input, select, button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 25px; /* Rounded corners */
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    /* Style the button with a dark blue background and red accent on hover */
+    button {
+      background: #0d47a1;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #d32f2f; /* Red accent */
+    }
+    /* Style the response message */
+    #response {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #0d47a1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="Fairpay.png" alt="FairPay Logo"> <!-- Replace with actual logo -->
+    <h2>Attendance Register</h2>
+    <form id="contact-form">
+      <select id="branch" required onchange="updateSignatories()">
+        <option value="" disabled selected>Select Branch</option>
+        <option value="Randburg">Randburg</option>
+        <option value="Marabastad">Marabastad</option>
+      </select>
+
+      <select id="role" required onchange="updateSignatories()">
+        <option value="" disabled selected>Select Role</option>
+        <option value="TDR">TDR</option>
+        <option value="Agent">Agent</option>
+        <option value="Promoter">Promoter</option> <!-- Only for Marabastad -->
+      </select>
+
+      <input type="date" id="date" required>
+
+      <select id="signatory" required>
+        <option value="" disabled selected>Select Signatory</option>
+      </select>
+
+      <input type="text" id="initials" placeholder="Initials" required>
+      <input type="email" id="email" placeholder="Your Email" required>
+      <input type="tel" id="phone" placeholder="Cell Phone Number" pattern="[0-9]{10}" required>
+
+      <button type="submit">Submit</button>
+    </form>
+    <p id="response"></p>
+  </div>
+
+  <script>
+    function updateSignatories() {
+      const role = document.getElementById("role").value;
+      const branch = document.getElementById("branch").value;
+      const signatory = document.getElementById("signatory");
+
+      // Clear previous options
+      signatory.innerHTML = '<option value="" disabled selected>Select Signatory</option>';
+
+      const signatories = {
+        "Randburg": { 
+          "TDR": ["Kedibone Mthethwa", "Ronewa Disney Mulaudzi"], 
+          "Agent": ["Mmaphuti Maeta", "Leti Selowa", "Moipone Paulinah Matlaila"]
+        },
+        "Marabastad": { 
+          "TDR": ["Mondli Mokoka", "Eugene Monama"], 
+          "Agent": ["Kamogelo Tsebe", "Reitumetsi Nkale", "Agnes Mateya", "Sheryl Mahlakgane"],
+          "Promoter": ["Daniel Modiba", "Kabi Mokoena", "Mpumelelo Mokoena", "Amogelang Nkale"]
+        }
+      };
+
+      if (branch in signatories && role in signatories[branch]) {
+        signatories[branch][role].forEach(person => {
+          let option = document.createElement("option");
+          option.value = person;
+          option.textContent = person;
+          signatory.appendChild(option);
+        });
+      }
+    }
+
+    document.getElementById("contact-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      
+      let formData = {
+        branch: document.getElementById("branch").value,
+        role: document.getElementById("role").value,
+        date: document.getElementById("date").value,
+        signatory: document.getElementById("signatory").value,
+        initials: document.getElementById("initials").value,
+        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value
+      };
+
+      fetch("http://localhost:8889/register.php", {
+        method: "POST",
+        body: JSON.stringify(formData),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("response").innerText = "Form submitted successfully!";
+        document.getElementById("contact-form").reset();
+      })
+      .catch(error => {
+        document.getElementById("response").innerText = "Error submitting form.";
+      });
+    });
+
+    // Register service worker for PWA support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(function(error) {
+        console.log('ServiceWorker registration failed: ', error);
+      });
+    }
+  </script>
+</body>
+</html>
