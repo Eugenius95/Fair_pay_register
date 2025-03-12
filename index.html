@@ -17,13 +17,19 @@
       margin: 0;
     }
     .container {
-      width: 90%;
-      max-width: 400px;
+      width: 100%;
+      max-width: 360px;
       background: white;
       padding: 20px;
       border-radius: 16px;
       box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
       text-align: center;
+    }
+    img {
+      width: 100%;
+      max-width: 200px;
+      display: block;
+      margin: 0 auto 10px;
     }
     input, select, button {
       width: 100%;
@@ -52,6 +58,7 @@
 </head>
 <body>
   <div class="container">
+    <img src="Fairpay.png" alt="Company Logo">
     <h2>Attendance Register</h2>
     <form id="contact-form">
       <select id="branch" required onchange="updateFields()">
