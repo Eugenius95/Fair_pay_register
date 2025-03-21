@@ -15,11 +15,10 @@
       height: 100vh; 
       background-color: #e0f7fa;
       margin: 0;
-      padding: 10px;
     }
     .container {
       width: 100%;
-      max-width: 400px;
+      max-width: 360px;
       background: white;
       padding: 20px;
       border-radius: 16px;
@@ -27,12 +26,10 @@
       text-align: center;
     }
     img {
-      width: 150px; 
-      margin-bottom: 10px;
-    }
-    h2 {
-      color: #0d47a1;
-      margin-bottom: 20px;
+      width: 100%;
+      max-width: 200px;
+      display: block;
+      margin: 0 auto 10px;
     }
     input, select, button {
       width: 100%;
@@ -43,26 +40,6 @@
       font-size: 16px;
       box-sizing: border-box;
     }
-    .signature {
-      width: 100%;
-      height: 100px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      background-color: #f8f8f8;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 14px;
-      color: #888;
-      position: relative;
-    }
-    canvas {
-      width: 100%;
-      height: 100px;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
     button {
       background: #0d47a1;
       color: white;
@@ -70,111 +47,91 @@
       border: none;
       transition: background 0.3s ease;
     }
-    button:hover {
-      background: #d32f2f;
-    }
-    #response {
-      text-align: center;
+    button:hover { background: #d32f2f; }
+    canvas {
+      border: 1px solid #ddd;
+      width: 100%;
+      height: 150px;
       margin-top: 10px;
-      font-weight: bold;
-      color: #0d47a1;
-    }
-    @media (max-width: 480px) {
-      body {
-        height: auto;
-      }
-      .container {
-        padding: 15px;
-      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="Fairpay.png" alt="FairPay Logo">
+    <img src="Fairpay.png" alt="Company Logo">
     <h2>Attendance Register</h2>
     <form id="contact-form">
-      <select id="branch" required onchange="updateSignatories()">
+      <select id="branch" required onchange="updateFields()">
         <option value="" disabled selected>Select Branch</option>
         <option value="Randburg">Randburg</option>
         <option value="Marabastad">Marabastad</option>
       </select>
-      <select id="role" required onchange="updateSignatories()">
+      <select id="role" required onchange="updateFields()">
         <option value="" disabled selected>Select Role</option>
         <option value="TDR">TDR</option>
         <option value="Agent">Agent</option>
         <option value="Promoter">Promoter</option>
       </select>
-      <input type="date" id="date" required>
-      <input type="time" id="time-in" required>
-      <input type="time" id="time-out" required>
       <select id="signatory" required>
         <option value="" disabled selected>Select Signatory</option>
       </select>
+      <input type="date" id="date" required>
+      <input type="text" id="timeIn" placeholder="Time In" readonly>
+      <input type="text" id="timeOut" placeholder="Time Out" readonly>
       <input type="text" id="initials" placeholder="Initials" required>
       <input type="email" id="email" placeholder="Your Email" required>
       <input type="tel" id="phone" placeholder="Cell Phone Number" pattern="[0-9]{10}" required>
-      <div class="signature">
-        <canvas id="signature-pad"></canvas>
-        <span>Sign Here</span>
-      </div>
+      <p>Sign Below:</p>
+      <canvas id="signature-pad"></canvas>
+      <button type="button" onclick="clearSignature()">Clear Signature</button>
       <button type="submit">Submit</button>
     </form>
     <p id="response"></p>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad"></script>
   <script>
-    function updateSignatories() {
-      const role = document.getElementById("role").value;
+    const timeMapping = {
+      "Randburg": { "TDR": ["11:00", "18:00"], "Agent": ["11:00", "18:00"] },
+      "Marabastad": { "TDR": ["06:30", "14:30"], "Agent": ["06:30", "14:30"], "Promoter": ["07:00", "12:00"] }
+    };
+
+    const signatories = {
+      "Randburg": { 
+        "TDR": ["Kedibone Mthethwa", "Ronewa Disney Mulaudzi"], 
+        "Agent": ["Mmaphuti Maeta", "Leti Selowa", "Moipone Paulinah Matlaila"]
+      },
+      "Marabastad": { 
+        "TDR": ["Mondli Mokoka", "Eugene Monama"], 
+        "Agent": ["Kamogelo Tsebe", "Reitumetsi Nkale", "Agnes Mateya", "Sheryl Mahlakgane"],
+        "Promoter": ["Daniel Modiba", "Kabi Mokoena", "Mpumelelo Mokoena", "Amogelang Nkale"]
+      }
+    };
+    
+    function updateFields() {
       const branch = document.getElementById("branch").value;
-      const signatory = document.getElementById("signatory");
-      signatory.innerHTML = '<option value="" disabled selected>Select Signatory</option>';
-      const signatories = {
-        "Randburg": { 
-          "TDR": ["Kedibone Mthethwa", "Ronewa Disney Mulaudzi"], 
-          "Agent": ["Mmaphuti Maeta", "Leti Selowa", "Moipone Paulinah Matlaila"]
-        },
-        "Marabastad": { 
-          "TDR": ["Mondli Mokoka", "Eugene Monama"], 
-          "Agent": ["Kamogelo Tsebe", "Reitumetsi Nkale", "Agnes Mateya", "Sheryl Mahlakgane"],
-          "Promoter": ["Daniel Modiba", "Kabi Mokoena", "Mpumelelo Mokoena", "Amogelang Nkale"]
-        }
-      };
-      if (branch in signatories && role in signatories[branch]) {
-        signatories[branch][role].forEach(person => {
+      const role = document.getElementById("role").value;
+      const signatorySelect = document.getElementById("signatory");
+      signatorySelect.innerHTML = '<option value="" disabled selected>Select Signatory</option>';
+      
+      if (branch && role && timeMapping[branch] && timeMapping[branch][role]) {
+        document.getElementById("timeIn").value = timeMapping[branch][role][0];
+        document.getElementById("timeOut").value = timeMapping[branch][role][1];
+      }
+      
+      if (branch && role && signatories[branch] && signatories[branch][role]) {
+        signatories[branch][role].forEach(signatory => {
           let option = document.createElement("option");
-          option.value = person;
-          option.textContent = person;
-          signatory.appendChild(option);
+          option.value = signatory;
+          option.textContent = signatory;
+          signatorySelect.appendChild(option);
         });
       }
     }
-    document.getElementById("contact-form").addEventListener("submit", function(e) {
-      e.preventDefault();
-      let formData = {
-        branch: document.getElementById("branch").value,
-        role: document.getElementById("role").value,
-        date: document.getElementById("date").value,
-        timeIn: document.getElementById("time-in").value,
-        timeOut: document.getElementById("time-out").value,
-        signatory: document.getElementById("signatory").value,
-        initials: document.getElementById("initials").value,
-        email: document.getElementById("email").value,
-        phone: document.getElementById("phone").value
-      };
-      fetch("https://your-backend-url/submit", {
-        method: "POST",
-        body: JSON.stringify(formData),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById("response").innerText = "Form submitted successfully!";
-        document.getElementById("contact-form").reset();
-      })
-      .catch(error => {
-        document.getElementById("response").innerText = "Error submitting form.";
-      });
-    });
+
+    const canvas = document.getElementById("signature-pad");
+    const signaturePad = new SignaturePad(canvas);
+    function clearSignature() { signaturePad.clear(); }
   </script>
 </body>
 </html>
